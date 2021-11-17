@@ -40,11 +40,14 @@
  * https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/sound/usb/mixer_scarlett.c#n635
  */
 
-#define MAX_GAINS   10
-#define MAX_BUSSES  20
-#define MAX_HIZS    2
-#define MAX_PADS    4
-#define MAX_AIRS    2
+#define MAX_GAINS    10
+#define MAX_BUSSES   20
+#define MAX_HIZS      2
+#define MAX_PADS      4
+#define MAX_AIRS      2
+#define MAX_CLOCKS    2
+#define MAX_PHANTOMS  2
+#define MAX_AUX_MUTES 4
 
 typedef struct {
 	char        name[64];
@@ -71,7 +74,33 @@ typedef struct {
 	int         hiz_map[MAX_HIZS];
 	int         pad_map[MAX_PADS];
 	int         air_map[MAX_AIRS];
+
+	// Scarlett 8i6 Gen 3 additions
+	unsigned    num_clock;
+	unsigned    num_aux_mute;
+	unsigned    num_phantom;
+	bool        phantoms_are_switches;
+	int         clock_sync_status;
+	int         clock_source;
+	int         aux_mute_map[MAX_AUX_MUTES];      // Mutes for samo aux_outs
+	int         clock_map[MAX_CLOCKS];            // Clock Source, Clock Sync Status
+	int         phantom_map[MAX_PHANTOMS];        // Phantom Power, Phantom Power Persistance
+	char        clock_labels[MAX_CLOCKS][32];     //
+	char        phantom_labels[MAX_PHANTOMS][32]; //
 } Device;
+
+#define NOT_TESTED \
+		.num_clock = 0, \
+		.num_aux_mute = 0,\
+		.num_phantom = 0,\
+		.phantoms_are_switches = false,\
+		.clock_sync_status = -1,\
+		.clock_source = -1,\
+		.aux_mute_map = { -1, -1, -1, -1 }, \
+		.clock_map = { -1, -1 },   \
+		.phantom_map = { -1, -1 },  \
+		.clock_labels = {"", ""}, \
+		.phantom_labels = {"", ""}
 
 static Device devices[] = {
 	{
@@ -93,6 +122,7 @@ static Device devices[] = {
 		.out_bus_map = { 2, 3, 5, 6, 8, 9, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 }, // Source, ENUM
 		.hiz_map = { 12, 13 },
 		.pad_map = { -1, -1, -1, -1 },
+		NOT_TESTED
 	},
 	{
 		.name = "Scarlett 18i8 USB",
@@ -113,6 +143,7 @@ static Device devices[] = {
 		.out_bus_map = { 2, 3, 5, 6, 8, 9, 11, 12, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
 		.hiz_map = { 15, 17 }, // < Input 1 Impedance, ENUM,  Input 2 Impedance, ENUM
 		.pad_map = { 16, 18, 19, 20 },
+		NOT_TESTED
 	},
 	{
 		.name = "Scarlett 6i6 USB",
@@ -133,6 +164,7 @@ static Device devices[] = {
 		.input_offset = 18,
 		.hiz_map = { 12, 14 },
 		.pad_map = { 13, 15, 16, 17 },
+		NOT_TESTED
 	},
 	{
 		.name = "Scarlett 18i20 USB",
@@ -153,7 +185,9 @@ static Device devices[] = {
 		.out_bus_map = { 5, 6, 8, 9, 11, 12, 14, 15, 17, 18, 20, 21, 23, 24, 26, 27, 29, 30, 3, 4 },
 		.hiz_map = { -1, -1 },
 		.pad_map = { -1, -1, -1, -1 },
+		NOT_TESTED
 	},
+
 	{
 		.name = "Scarlett 8i6 USB",
 		.smi = 8, .smo = 8,
@@ -161,19 +195,50 @@ static Device devices[] = {
 		.smst = 0,
 		.samo = 4,
 		.num_hiz = 2,
-		.num_pad = 2, 
-		.num_air = 2, 
+		.num_pad = 2,
+		.num_air = 2,
 		.pads_are_switches = true,
 		.matrix_mix_column_major = true,
 		.matrix_mix_offset = 20, .matrix_mix_stride = 8,
 		.matrix_in_offset = 84, .matrix_in_stride = 1,
+
+
+#if 1 // Scarlett 8i6 Gen 3 ...
+		.out_gain_map = { 10 /* Headphone 1 */, 12, 14 /* Headphone 2 */, 16, -1, -1 , -1, -1, -1, -1 },
+		.out_gain_labels = { "Headphone 1 L", "Headphone 1 R", "Headphone 2 L", "Headphone 2 R", "S/PDIF", "S/PDIF", "", "", "", "" },
+		.hiz_map = { 19, 23 },
+		.pad_map = { 20, 24, -1, -1 },
+		.air_map = { 18, 22 },
+
+		.out_bus_map = { 97, 98, 99, 100, 103, 104, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
+		.input_offset = 0,
+
+#if 0
+		NOT_TESTED
+#else
+		.num_clock = 2,
+		.num_aux_mute = 4,
+		.num_phantom = 2,
+		.phantoms_are_switches = true,
+		.clock_sync_status = -1,
+		.clock_source = -1,
+		.aux_mute_map = { 11, 13, 15, 17 }, // Mutes for samo aux_outs
+		.clock_map = { 101, 105 },   // Add 2 Clock Source / Sync Status widgets
+		.phantom_map = { 21, 102 },  // Add 2 Phantom Power widgets
+		.clock_labels = {"", ""},
+		.phantom_labels = {"", ""},
+#endif
+#else
 		.out_gain_map = { 10 /* Headphone 1 */, 11, 12 /* Headphone 2 */, 13, -1, -1 , -1, -1, -1, -1 },
 		.out_gain_labels = { "Headphone 1L", "Headphone 1R", "Headphone 2L", "Headphone 2R", "SPDIF/L", "SPDIF/R", "", "", "", "" },
-		.out_bus_map = { 92, 93, 94, 95, 97, 98, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
-		.input_offset = 0,
 		.hiz_map = { 15, 18 },
 		.pad_map = { 16, 19, -1, -1 },
 		.air_map = { 14, 17 },
+
+		.out_bus_map = { 92, 93, 94, 95, 97, 98, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
+#endif
+
+ 
 	},
 };
 
@@ -211,6 +276,8 @@ typedef struct {
 	RobTkCBtn**     btn_hiz;
 	RobTkCBtn**     btn_pad;
 	RobTkCBtn**     btn_air;
+	RobTkCBtn**     btn_clock;
+	RobTkCBtn**     btn_phantom;
 	RobTkPBtn*      btn_reset;
 
 	RobTkLbl*       heading[3];
@@ -309,16 +376,25 @@ static const char* out_gain_label (RobTkApp *ui, int n)
 	return ui->device->out_gain_labels[n];
 }
 
+static const char* aux_gain_label (RobTkApp *ui, int n)
+{
+	return ui->device->out_gain_labels[n + ui->device->smst];
+}
+
 static Mctrl* aux_gain (RobTkApp* ui, unsigned int c)
 {
 	assert (c < MAX_GAINS);
 	return &ui->ctrl[ui->device->out_gain_map[c + ui->device->smst]];
 }
 
-static const char* aux_gain_label (RobTkApp *ui, int n)
+/* Aux Mute switches */
+static Mctrl* aux_mute (RobTkApp *ui, unsigned c)
 {
-	return ui->device->out_gain_labels[n + ui->device->smst];
+	assert (c < ui->device->num_aux_mute);
+	assert (c < MAX_AUX_MUTES);
+	return &ui->ctrl[ui->device->aux_mute_map[c]];
 }
+
 
 static const char* out_select_label (RobTkApp *ui, int n)
 {
@@ -359,6 +435,20 @@ static Mctrl* air (RobTkApp *ui, unsigned c)
 	return &ui->ctrl[ui->device->air_map[c]];
 }
 
+/* Phatom switches */
+static Mctrl* phantom (RobTkApp *ui, unsigned c)
+{
+	assert (c < ui->device->num_phantom);
+	return &ui->ctrl[ui->device->phantom_map[c]];
+}
+
+/* Clock switches (clock name confict, thus glock) */
+static Mctrl* glock (RobTkApp *ui, unsigned c)
+{
+	assert (c < ui->device->num_clock);
+	return &ui->ctrl[ui->device->clock_map[c]];
+}
+
 /* master gain */
 static Mctrl* mst_gain (RobTkApp* ui)
 {
@@ -393,18 +483,25 @@ static void dump_device_desc (Device const* const d)
 	printf ("Switches: n_pad=%d, n_hiz=%d\n",
 			d->num_pad, d->num_hiz);
 
+// Updated to get rid of extra trailing empty ", "
 #define DUMP_ARRAY(name, len, fmt)  \
   printf (#name " = {");            \
   for (int i = 0; i < len; ++i) {   \
-    printf (fmt ", ", d->name[i]);  \
+    printf (fmt, d->name[i], (((i+1) < len) ? ", " : ""));  \
   }                                 \
   printf ("};\n");
 
-	DUMP_ARRAY (hiz_map, MAX_HIZS, "%d");
-	DUMP_ARRAY (pad_map, MAX_PADS, "%d");
-	DUMP_ARRAY (out_gain_map, MAX_GAINS, "%d");
-	DUMP_ARRAY (out_gain_labels, MAX_GAINS, "%s");
-	DUMP_ARRAY (out_bus_map, MAX_BUSSES, "%d");
+	DUMP_ARRAY (hiz_map, MAX_HIZS, "%d%s");
+	DUMP_ARRAY (pad_map, MAX_PADS, "%d%s");
+	DUMP_ARRAY (air_map, MAX_AIRS, "%d%s");
+	DUMP_ARRAY (clock_map, MAX_CLOCKS, "%d%s");
+	DUMP_ARRAY (clock_labels, MAX_CLOCKS, "%s%s");
+	DUMP_ARRAY (phantom_map, MAX_PHANTOMS, "%d%s");
+	DUMP_ARRAY (phantom_labels, MAX_PHANTOMS, "%s%s");
+	DUMP_ARRAY (aux_mute_map, MAX_AUX_MUTES, "%d%s");
+	DUMP_ARRAY (out_gain_map, MAX_GAINS, "%d%s");
+	DUMP_ARRAY (out_gain_labels, MAX_GAINS, "%s%s");
+	DUMP_ARRAY (out_bus_map, MAX_BUSSES, "%d%s");
 	printf ("---\n");
 }
 
@@ -520,7 +617,22 @@ static int open_mixer (RobTkApp* ui, const char* card, int opts)
 		c->name = strdup (snd_mixer_selem_get_name (elem));
 
 		if (opts & OPT_DETECT) {
+
 			if (snd_mixer_selem_is_enumerated (elem)) {
+
+				if (strstr (c->name, "Clock Source")) {  // Scarlett 8i6 Gen 3
+					strcpy(d.clock_labels[d.num_clock], "Clock Source");
+					d.clock_map[d.num_clock++] = i;
+					d.clock_source = i;
+				}
+
+				if (strstr (c->name, "Sync Status")) {  // Scarlett 8i6 Gen 3
+					strcpy(d.clock_labels[d.num_clock], "Sync Status");
+					d.clock_map[d.num_clock++] = i;
+					d.clock_sync_status = i;
+				}
+
+
 				if (strstr (c->name, " Impedance") || strstr (c->name, " Level")) {
 					d.hiz_map[d.num_hiz++] = i;
 				}
@@ -549,11 +661,16 @@ static int open_mixer (RobTkApp* ui, const char* card, int opts)
 					d.out_bus_map[obm++] = i;
 					if (t1 && (obm > d.samo + d.smst)) {
 						strncpy (d.out_gain_labels[obm - 1], c->name, t1 - c->name);
-						d.out_gain_labels[obm - 1][c->name - t1] = '\0';
+						d.out_gain_labels[obm - 1][t1 - c->name] = '\0'; // Fixed negative index
 						d.sout++;
 					}
 				}
 			} else if (snd_mixer_selem_has_playback_switch (elem)) {
+
+				if (strstr (c->name, " Mute")) { // Scarlett 8i6 Gen 3
+					d.aux_mute_map[d.num_aux_mute++] = i;
+				}
+
 				if (strstr (c->name, "Master ")) {
 					char* t1 = strchr (c->name, '(');
 					char* t2 = t1 ? strchr (t1, ')') : NULL;
@@ -569,13 +686,27 @@ static int open_mixer (RobTkApp* ui, const char* card, int opts)
 					char* t2 = t1 ? strchr (t1 + 1, ' ') : NULL;
 					if (t2) {
 						strncpy (d.out_gain_labels[d.smst], c->name, t1 - c->name);
-						d.out_gain_labels[d.smst][t1 - c->name + 1] = '\0';
+						d.out_gain_labels[d.smst][t1 - c->name] = '\0'; // Fixed off-by-1
 						strcat (d.out_gain_labels[d.smst], t2);
 					}
 					d.out_gain_map[d.smst++] = i;
 					d.sout = d.smst * 2;
 				}
 			} else if (snd_mixer_selem_has_capture_switch (elem)) {
+
+				if (strstr (c->name, "1-2 Phantom Power")) { // Scarlett 8i6 Gen 3
+					strcpy(d.phantom_labels[d.num_phantom], "Phantom");
+					d.phantom_map[d.num_phantom++] = i;
+					d.phantoms_are_switches = true;
+				}
+
+				if (strstr (c->name, "Phantom Power Persistence")) { // Scarlett 8i6 Gen 3
+					strcpy(d.phantom_labels[d.num_phantom], "Phantom Persist");
+					d.phantom_map[d.num_phantom++] = i;
+					d.phantoms_are_switches = true;
+				}
+
+
 				if (strstr (c->name, " Pad")) {
 					d.pad_map[d.num_pad++] = i;
 					d.pads_are_switches = true;
@@ -583,12 +714,13 @@ static int open_mixer (RobTkApp* ui, const char* card, int opts)
 					d.air_map[d.num_air++] = i;
 				}
 			} else {
+
 				if (strstr (c->name, "Line 0") || strstr (c->name, "Line 1")) {
 					char* t1 = c->name + 9;
 					char* t2 = strchr (t1 + 1, ')');
 					if (t2) {
 						strncpy (d.out_gain_labels[d.smst + d.samo], t1, t2 - t1);
-						d.out_gain_labels[d.smst + d.samo][t2 - t1 + 1] = '\0';
+						d.out_gain_labels[d.smst + d.samo][t2 - t1] = '\0'; // Fixed off by 1
 					}
 					d.out_gain_map[d.smst + d.samo++] = i;
 					d.sout++;
@@ -845,6 +977,7 @@ static bool cb_btn_reset (RobWidget* w, void* handle) {
 static bool cb_set_hiz (RobWidget* w, void* handle) {
 	RobTkApp* ui = (RobTkApp*)handle;
 	if (ui->disable_signals) return TRUE;
+	// Sets all HiZ buttons, not just the one that changed ...
 	for (uint32_t i = 0; i < ui->device->num_hiz; ++i) {
 		int val = robtk_cbtn_get_active (ui->btn_hiz[i]) ? 1 : 0;
 		set_enum (hiz (ui, i), val);
@@ -855,6 +988,7 @@ static bool cb_set_hiz (RobWidget* w, void* handle) {
 static bool cb_set_pad (RobWidget* w, void* handle) {
 	RobTkApp* ui = (RobTkApp*)handle;
 	if (ui->disable_signals) return TRUE;
+	// Sets all PAD buttons, not just the one that changed ...
 	for (uint32_t i = 0; i < ui->device->num_pad; ++i) {
 		if (ui->device->pads_are_switches)
 			set_switch (pad (ui, i), robtk_cbtn_get_active (ui->btn_pad[i]));
@@ -866,9 +1000,37 @@ static bool cb_set_pad (RobWidget* w, void* handle) {
 	return TRUE;
 }
 
+static bool cb_set_clock (RobWidget* w, void* handle) {
+	RobTkApp* ui = (RobTkApp*)handle;
+	if (ui->disable_signals) return TRUE;
+	// Sets all CLOCK buttons, not just the one that changed ...
+	for (uint32_t i = 0; i < ui->device->num_clock; ++i) {
+		int val = robtk_cbtn_get_active (ui->btn_clock[i]) ? 1 : 0;
+		set_enum (glock (ui, i), val);
+	}
+	return TRUE;
+}
+
+static bool cb_set_phantom (RobWidget* w, void* handle) {
+	RobTkApp* ui = (RobTkApp*)handle;
+	if (ui->disable_signals) return TRUE;
+	// Sets all PHANTOM POWER buttons, not just the one that changed ...
+	for (uint32_t i = 0; i < ui->device->num_phantom; ++i) {
+		if (ui->device->phantoms_are_switches) {
+			set_switch (phantom (ui, i), robtk_cbtn_get_active (ui->btn_phantom[i]));
+		} else {
+			int val = robtk_cbtn_get_active (ui->btn_phantom[i]) ? 1 : 0;
+			set_enum (phantom (ui, i), val);
+		}
+	}
+	return TRUE;
+}
+
+
 static bool cb_set_air (RobWidget* w, void* handle) {
 	RobTkApp* ui = (RobTkApp*)handle;
 	if (ui->disable_signals) return TRUE;
+	// Sets all AIR buttons, not just the one that changed ...
 	for (uint32_t i = 0; i < ui->device->num_air; ++i) {
 		set_switch (air (ui, i), robtk_cbtn_get_active (ui->btn_air[i]));
 	}
@@ -940,6 +1102,15 @@ static bool cb_aux_gain (RobWidget* w, void* handle) {
 	unsigned int n;
 	memcpy (&n, w->name, sizeof (unsigned int));
 	const float val = robtk_dial_get_value (ui->aux_gain[n]);
+
+	// When aux_gain dial is clicked, change the color of the dial and 
+	// change the corresponding aux_mute control switch
+	{
+		// BUG Fix - Feature Addition
+		const bool mute = robtk_dial_get_state (ui->aux_gain[n]) == 1;
+		set_mute (aux_mute (ui, n), mute);
+	}
+
 	set_dB (aux_gain (ui, n), knob_to_db (val));
 	return TRUE;
 }
@@ -969,6 +1140,7 @@ static void set_select_values (RobTkSelect* s,  Mctrl* ctrl)
 		if (snd_mixer_selem_get_enum_item_name (ctrl->elem, i, sizeof (name) - 1, name) < 0) {
 			continue;
 		}
+
 		robtk_select_add_item (s, i, name);
 	}
 	robtk_select_set_value (s, get_enum (ctrl));
@@ -1175,6 +1347,18 @@ static RobWidget* toplevel (RobTkApp* ui, void* const top) {
 		ui->btn_air = NULL;
 	}
 
+	if  (ui->device->num_clock > 0) {
+		ui->btn_clock = malloc (ui->device->num_clock * sizeof (RobTkCBtn *));
+	} else {
+		ui->btn_clock = NULL;
+	}
+
+	if  (ui->device->num_phantom > 0) {
+		ui->btn_phantom = malloc (ui->device->num_phantom * sizeof (RobTkCBtn *));
+	} else {
+		ui->btn_phantom = NULL;
+	}
+
 	const int c0 = 4; // matrix column offset
 	const int rb = 2 + ui->device->smi; // matrix bottom
 
@@ -1239,6 +1423,7 @@ static RobWidget* toplevel (RobTkApp* ui, void* const top) {
 			unsigned int n = r * ui->device->smo + c;
 			Mctrl* ctrl = matrix_ctrl_cr (ui, c, r);
 			assert (ctrl);
+
 			ui->mtx_gain[n] = robtk_dial_new_with_size (
 					0, 1, 1.f / 80.f,
 					GD_WIDTH, GED_HEIGHT, GD_CX, GD_CY, GED_RADIUS);
@@ -1295,6 +1480,7 @@ static RobWidget* toplevel (RobTkApp* ui, void* const top) {
 	if (ui->device->smst) {
 		ui->out_mst = robtk_lbl_new ("Master");
 		rob_table_attach (ui->output, robtk_lbl_widget (ui->out_mst), 0, 2, 0, 1, 2, 2, RTK_SHRINK, RTK_SHRINK);
+
 		Mctrl* ctrl = mst_gain (ui);
 		ui->mst_gain = robtk_dial_new_with_size (
 				0, 1, 1.f / 80.f,
@@ -1312,6 +1498,7 @@ static RobWidget* toplevel (RobTkApp* ui, void* const top) {
 		robtk_dial_annotation_callback (ui->mst_gain, dial_annotation_db, ui);
 		rob_table_attach (ui->output, robtk_dial_widget (ui->mst_gain), 0, 2, 1, 3, 2, 0, RTK_SHRINK, RTK_SHRINK);
 	}
+
 
 	/* output level + labels */
 	for (unsigned int o = 0; o < ui->device->smst; ++o) {
@@ -1334,6 +1521,7 @@ static RobWidget* toplevel (RobTkApp* ui, void* const top) {
 
 		robtk_dial_set_value (ui->out_gain[o], db_to_knob (get_dB (ctrl)));
 		robtk_dial_set_state (ui->out_gain[o], get_mute (ctrl) ? 1 : 0);
+
 		robtk_dial_set_callback (ui->out_gain[o], cb_out_gain, ui);
 		robtk_dial_annotation_callback (ui->out_gain[o], dial_annotation_db, ui);
 		rob_table_attach (ui->output, robtk_dial_widget (ui->out_gain[o]), 3 * oc + 2, 3 * oc + 5, row + 1, row + 2, 2, 0, RTK_SHRINK, RTK_SHRINK);
@@ -1356,12 +1544,20 @@ static RobWidget* toplevel (RobTkApp* ui, void* const top) {
 
 		robtk_dial_enable_states (ui->aux_gain[o], 1);
 		robtk_dial_set_state_color (ui->aux_gain[o], 1, .5, .3, .1, 1.0);
-
 		robtk_dial_set_default (ui->aux_gain[o], db_to_knob (0));
+
 		robtk_dial_set_default_state (ui->aux_gain[o], 0);
 
+		// Set Mute/UnMute STATE based on corresponding aux_mute
+		if (ui->device->samo == ui->device->num_aux_mute) {
+			Mctrl* ctrl2 = aux_mute (ui, o); // Get corresponding mute control
+			robtk_dial_set_state (ui->aux_gain[o], (get_mute (ctrl2) ? 1 : 0));
+		}
+
 		robtk_dial_set_value (ui->aux_gain[o], db_to_knob (get_dB (ctrl)));
+
 		robtk_dial_set_callback (ui->aux_gain[o], cb_aux_gain, ui);
+
 		robtk_dial_annotation_callback (ui->aux_gain[o], dial_annotation_db, ui);
 		rob_table_attach (ui->output, robtk_dial_widget (ui->aux_gain[o]), 3 * oc + 2, 3 * oc + 5, row + 1, row + 2, 2, 0, RTK_SHRINK, RTK_SHRINK);
 
@@ -1383,7 +1579,7 @@ static RobWidget* toplevel (RobTkApp* ui, void* const top) {
 		robtk_cbtn_set_active (ui->btn_hiz[i], get_enum (hiz (ui, i)) == 1);
 		robtk_cbtn_set_callback (ui->btn_hiz[i], cb_set_hiz, ui);
 		rob_table_attach (ui->output, robtk_cbtn_widget (ui->btn_hiz[i]),
-				i, i + 1, 3, 4, 0, 0, RTK_SHRINK, RTK_SHRINK);
+				i, i + 1, 0, 1, 0, 0, RTK_SHRINK, RTK_SHRINK);
 	}
 
 	/* Pads */
@@ -1396,17 +1592,51 @@ static RobWidget* toplevel (RobTkApp* ui, void* const top) {
 		}
 		robtk_cbtn_set_callback (ui->btn_pad[i], cb_set_pad, ui);
 		rob_table_attach (ui->output, robtk_cbtn_widget (ui->btn_pad[i]),
-				i, i + 1, 4, 5, 0, 0, RTK_SHRINK, RTK_SHRINK);
+				i, i + 1, 1, 2, 0, 0, RTK_SHRINK, RTK_SHRINK);
 	}
 
 	/* Airs */
 	for (unsigned int i = 0; i < ui->device->num_air; ++i) {
 		ui->btn_air[i] = robtk_cbtn_new ("Air", GBT_LED_LEFT, false);
-			robtk_cbtn_set_active (ui->btn_air[i], get_switch (air (ui, i)) == 1);
+		robtk_cbtn_set_active (ui->btn_air[i], get_switch (air (ui, i)) == 1);
 		robtk_cbtn_set_callback (ui->btn_air[i], cb_set_air, ui);
 		rob_table_attach (ui->output, robtk_cbtn_widget (ui->btn_air[i]),
-				i, i + 1, 5, 6, 0, 0, RTK_SHRINK, RTK_SHRINK);
+				i, i + 1, 2, 3, 0, 0, RTK_SHRINK, RTK_SHRINK);
 	}
+	
+	/* Clocks */
+	for (unsigned int i = 0; i < ui->device->num_clock; ++i) 
+	{
+		bool flat = (ui->device->clock_map[i] == ui->device->clock_sync_status);
+		ui->btn_clock[i] = robtk_cbtn_new (ui->device->clock_labels[i], GBT_LED_OFF, flat);
+
+		if (ui->device->clock_map[i] == ui->device->clock_sync_status) {
+			robtk_cbtn_set_sensitive (ui->btn_clock[i], false); // Display Sync Status ONLY
+			robtk_cbtn_set_active_text (ui->btn_clock[i], (get_enum (glock (ui, i)) == 1), "Locked", "Unlocked");
+		} else if (ui->device->clock_map[i] == ui->device->clock_source) {
+			robtk_cbtn_set_active_text (ui->btn_clock[i], (get_enum (glock (ui, i)) == 1), "SPDIF", "Internal");
+		} else {
+			robtk_cbtn_set_active (ui->btn_clock[i], get_enum (glock (ui, i)) == 1);
+		}
+		robtk_cbtn_set_callback (ui->btn_clock[i], cb_set_clock, ui);
+		rob_table_attach (ui->output, robtk_cbtn_widget (ui->btn_clock[i]),
+				i, i + 1, 3, 4, 0, 0, RTK_SHRINK, RTK_SHRINK);
+	}
+
+	/* Phantom Power and Phantom Power Persistance */
+	for (unsigned int i = 0; i < ui->device->num_phantom; ++i) 
+	{
+		ui->btn_phantom[i] = robtk_cbtn_new (ui->device->phantom_labels[i], GBT_LED_LEFT, false);
+		if (ui->device->phantoms_are_switches) {
+			robtk_cbtn_set_active (ui->btn_phantom[i], get_switch (phantom (ui, i)) == 1);
+		} else {
+			robtk_cbtn_set_active (ui->btn_phantom[i], get_enum (phantom (ui, i)) == 1);
+		}
+		robtk_cbtn_set_callback (ui->btn_phantom[i], cb_set_phantom, ui);
+		rob_table_attach (ui->output, robtk_cbtn_widget (ui->btn_phantom[i]),
+				i, i + 1, 4, 5, 0, 0, RTK_SHRINK, RTK_SHRINK);
+	}
+
 
 	/* output selectors */
 	for (unsigned int o = 0; o < ui->device->sout; ++o) {
@@ -1504,6 +1734,14 @@ static void gui_cleanup (RobTkApp* ui) {
 		robtk_cbtn_destroy (ui->btn_air[i]);
 	}
 
+	for (int i = 0; i < ui->device->num_clock; i++) {
+		robtk_cbtn_destroy (ui->btn_clock[i]);
+	}
+
+	for (int i = 0; i < ui->device->num_phantom; i++) {
+		robtk_cbtn_destroy (ui->btn_phantom[i]);
+	}
+
 	robtk_sep_destroy (ui->sep_v);
 	robtk_sep_destroy (ui->sep_h);
 	robtk_sep_destroy (ui->spc_v[0]);
@@ -1533,6 +1771,9 @@ static void gui_cleanup (RobTkApp* ui) {
 	free (ui->btn_hiz);
 	free (ui->btn_pad);
 	free (ui->btn_air);
+
+	free (ui->btn_clock);
+	free (ui->btn_phantom);
 }
 
 static char* lookup_device ()
@@ -1799,6 +2040,11 @@ port_event (LV2UI_Handle handle,
 	for (unsigned int o = 0; o < ui->device->samo; ++o) {
 		ctrl = aux_gain (ui, o);
 		robtk_dial_set_value (ui->aux_gain[o], db_to_knob (get_dB (ctrl)));
+
+		if (ui->device->samo == ui->device->num_aux_mute) {
+			Mctrl* ctrl2 = aux_mute (ui, o); // Get corresponding mute control
+			robtk_dial_set_state (ui->aux_gain[o], (get_mute (ctrl2) ? 1 : 0));
+		}
 	}
 
 	if (ui->device->smst) {
@@ -1810,6 +2056,38 @@ port_event (LV2UI_Handle handle,
 	for (unsigned int i = 0; i < ui->device->num_hiz; ++i) {
 		robtk_cbtn_set_active (ui->btn_hiz[i], get_enum (hiz (ui, i)) == 1);
 	}
+
+// [ Fixed - Respond to external changes from alsamixer and/or the physical Scarlett controls
+	for (unsigned int i = 0; i < ui->device->num_pad; ++i) {
+		if (ui->device->pads_are_switches) {
+			robtk_cbtn_set_active (ui->btn_pad[i], get_switch (pad (ui, i)) == 1);
+		} else {
+			robtk_cbtn_set_active (ui->btn_pad[i], get_enum (pad (ui, i)) == 1);
+		}
+	}
+
+	for (unsigned int i = 0; i < ui->device->num_air; ++i) {
+		robtk_cbtn_set_active (ui->btn_air[i], get_switch (air (ui, i)) == 1);
+	}
+
+	for (unsigned int i = 0; i < ui->device->num_clock; ++i) {
+		if (ui->device->clock_map[i] == ui->device->clock_sync_status) {
+			robtk_cbtn_set_active_text (ui->btn_clock[i], (get_enum (glock (ui, i)) == 1), "Locked", "Unlocked");
+		} else if (ui->device->clock_map[i] == ui->device->clock_source) {
+			robtk_cbtn_set_active_text (ui->btn_clock[i], (get_enum (glock (ui, i)) == 1), "SPDIF", "Internal");
+                } else {
+			robtk_cbtn_set_active (ui->btn_clock[i], (get_enum (glock (ui, i)) == 1));
+		}
+	}
+
+	for (unsigned int i = 0; i < ui->device->num_phantom; ++i) {
+		if (ui->device->phantoms_are_switches) {
+			robtk_cbtn_set_active (ui->btn_phantom[i], get_switch (phantom (ui, i)) == 1);
+		} else {
+			robtk_cbtn_set_active (ui->btn_phantom[i], get_enum (phantom (ui, i)) == 1);
+		}
+	}
+// ] Fixed - Respond to external changes from alsamixer and/or the physical Scarlett controls
 
 	for (unsigned int o = 0; o < ui->device->sout; ++o) {
 		ctrl = out_sel (ui, o);
