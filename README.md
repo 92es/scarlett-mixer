@@ -50,3 +50,37 @@ See also
 --------
 
 ALSA Mixer in HTLM-5 with ALSA JSON Gateway: https://github.com/fulup-bzh/AlsaJsonGateway
+
+My Scarlett Gen 3 8i6 Changes:
+
+This is my first git-hub commit so be forewarned.
+
+Tested on 3rd Gen Scarlett 8i6 on Debian 11, kernel 5.14.9 against beta alsamixer in kernel 5.14.
+
+- Fixed negative and off-by-1 index problems that were truncating labels.
+- Fixed AIR and PAD widget updates that were not responding to external changes.
+- Moved Hiz, Pad, Air button stack up 2 rows.
+- Added Clock Source widget (Internal/SPDIF).
+- Added Clock Sync Source display widget (Locked/Unlocked)
+- Added Phantom Power widget.
+- Added Phantom Power Persist widget.
+- Added ability to rapidly scroll through long lists of selector items "transparent scrollbar".
+  Just click the selector widget with mouse button 1, drag left or right until desired selection 
+  is displayed and then release button 1.  
+  Leaving the widget's real-estate will also terminate the selection leaving the last displayed 
+  selection as the current.  This is VERY FAST compared to 10 or 20 mouse clicks.
+
+Files Changed:
+
+- scarlett_mixer.c - Index fixes, additional widgets, etc.
+- robtk_selector.h - Added "trasparant scrollbar" functionality to selector list widgets
+- robtk_checkbutton.h - Added robtk_cbtn_set_active_text(..., bool v, char *on, char *off) helper function
+
+Notes:
+- robtk_selector.h and robtk_checkbutton.h will have to be placed in their appropriate directories.
+
+Original:
+![screenshot](https://github.com/92es/scarlett-mixer/blob/master/Scarlett%208i6%20Mixer%20Before.png "Original Scarlett 8i6 Mixer")
+
+Updated:
+![screenshot](https://github.com/92es/scarlett-mixer/blob/master/Scarlett%208i6%20Gen%203%20Mixer%20After.png "Modified Scarlett 8i6 3rd Gen Mixer")
