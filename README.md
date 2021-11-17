@@ -51,6 +51,9 @@ See also
 
 ALSA Mixer in HTLM-5 with ALSA JSON Gateway: https://github.com/fulup-bzh/AlsaJsonGateway
 
+
+-------------------------------------- %< snip, snip >% ---------------------------------------
+
 My Scarlett Gen 3 8i6 Changes:
 
 This is my first git-hub commit so be forewarned.
