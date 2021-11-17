@@ -62,6 +62,7 @@ Tested on 3rd Gen Scarlett 8i6 on Debian 11, kernel 5.14.9 against beta alsamixe
 
 - Fixed negative and off-by-1 index problems that were truncating labels.
 - Fixed AIR and PAD widget updates that were not responding to external changes.
+- Fixed MUTE functionality on 4 Headphone dial widgets.
 - Moved Hiz, Pad, Air button stack up 2 rows.
 - Added Clock Source widget (Internal/SPDIF).
 - Added Clock Sync Source display widget (Locked/Unlocked)
