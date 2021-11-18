@@ -621,13 +621,17 @@ static int open_mixer (RobTkApp* ui, const char* card, int opts)
 			if (snd_mixer_selem_is_enumerated (elem)) {
 
 				if (strstr (c->name, "Clock Source")) {  // Scarlett 8i6 Gen 3
-					strcpy(d.clock_labels[d.num_clock], "Clock Source");
+				//                                           Internal
+				//                                           SPDIF
+					strcpy(d.clock_labels[d.num_clock], "Internal"); // Size on longest string
 					d.clock_map[d.num_clock++] = i;
 					d.clock_source = i;
 				}
 
 				if (strstr (c->name, "Sync Status")) {  // Scarlett 8i6 Gen 3
-					strcpy(d.clock_labels[d.num_clock], "Sync Status");
+				//                                           Locked
+				//                                           Unlocked
+					strcpy(d.clock_labels[d.num_clock], "Unlocked"); // Size on longest string
 					d.clock_map[d.num_clock++] = i;
 					d.clock_sync_status = i;
 				}
@@ -695,13 +699,13 @@ static int open_mixer (RobTkApp* ui, const char* card, int opts)
 			} else if (snd_mixer_selem_has_capture_switch (elem)) {
 
 				if (strstr (c->name, "1-2 Phantom Power")) { // Scarlett 8i6 Gen 3
-					strcpy(d.phantom_labels[d.num_phantom], "Phantom");
+					strcpy(d.phantom_labels[d.num_phantom], "48V"); // Use short label
 					d.phantom_map[d.num_phantom++] = i;
 					d.phantoms_are_switches = true;
 				}
 
 				if (strstr (c->name, "Phantom Power Persistence")) { // Scarlett 8i6 Gen 3
-					strcpy(d.phantom_labels[d.num_phantom], "Phantom Persist");
+					strcpy(d.phantom_labels[d.num_phantom], "48V Persist"); // Use short label
 					d.phantom_map[d.num_phantom++] = i;
 					d.phantoms_are_switches = true;
 				}
@@ -1544,8 +1548,8 @@ static RobWidget* toplevel (RobTkApp* ui, void* const top) {
 
 		robtk_dial_enable_states (ui->aux_gain[o], 1);
 		robtk_dial_set_state_color (ui->aux_gain[o], 1, .5, .3, .1, 1.0);
-		robtk_dial_set_default (ui->aux_gain[o], db_to_knob (0));
 
+		robtk_dial_set_default (ui->aux_gain[o], db_to_knob (0));
 		robtk_dial_set_default_state (ui->aux_gain[o], 0);
 
 		// Set Mute/UnMute STATE based on corresponding aux_mute
@@ -1555,9 +1559,7 @@ static RobWidget* toplevel (RobTkApp* ui, void* const top) {
 		}
 
 		robtk_dial_set_value (ui->aux_gain[o], db_to_knob (get_dB (ctrl)));
-
 		robtk_dial_set_callback (ui->aux_gain[o], cb_aux_gain, ui);
-
 		robtk_dial_annotation_callback (ui->aux_gain[o], dial_annotation_db, ui);
 		rob_table_attach (ui->output, robtk_dial_widget (ui->aux_gain[o]), 3 * oc + 2, 3 * oc + 5, row + 1, row + 2, 2, 0, RTK_SHRINK, RTK_SHRINK);
 
