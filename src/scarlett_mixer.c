@@ -1364,7 +1364,8 @@ static RobWidget* toplevel (RobTkApp* ui, void* const top) {
 	}
 
 	const int c0 = 4; // matrix column offset
-	const int rb = 2 + ui->device->smi; // matrix bottom
+	// Use the tallest column, Capture rows (+ 1 label) or Matrix Mixer rows (+ 2 labels)
+	const int rb = MAX((2 + ui->device->smi), (1 + ui->device->sin)); // matrix bottom
 
 	/* table layout. NB: these are min sizes, table grows if needed */
 	ui->matrix = rob_table_new (/*rows*/rb, /*cols*/ 5 + ui->device->smo, FALSE);
@@ -1581,7 +1582,7 @@ static RobWidget* toplevel (RobTkApp* ui, void* const top) {
 		robtk_cbtn_set_active (ui->btn_hiz[i], get_enum (hiz (ui, i)) == 1);
 		robtk_cbtn_set_callback (ui->btn_hiz[i], cb_set_hiz, ui);
 		rob_table_attach (ui->output, robtk_cbtn_widget (ui->btn_hiz[i]),
-				i, i + 1, 0, 1, 0, 0, RTK_SHRINK, RTK_SHRINK);
+				i, i + 1, 3, 4, 0, 0, RTK_SHRINK, RTK_SHRINK);
 	}
 
 	/* Pads */
@@ -1594,7 +1595,7 @@ static RobWidget* toplevel (RobTkApp* ui, void* const top) {
 		}
 		robtk_cbtn_set_callback (ui->btn_pad[i], cb_set_pad, ui);
 		rob_table_attach (ui->output, robtk_cbtn_widget (ui->btn_pad[i]),
-				i, i + 1, 1, 2, 0, 0, RTK_SHRINK, RTK_SHRINK);
+				i, i + 1, 4, 5, 0, 0, RTK_SHRINK, RTK_SHRINK);
 	}
 
 	/* Airs */
@@ -1603,9 +1604,25 @@ static RobWidget* toplevel (RobTkApp* ui, void* const top) {
 		robtk_cbtn_set_active (ui->btn_air[i], get_switch (air (ui, i)) == 1);
 		robtk_cbtn_set_callback (ui->btn_air[i], cb_set_air, ui);
 		rob_table_attach (ui->output, robtk_cbtn_widget (ui->btn_air[i]),
-				i, i + 1, 2, 3, 0, 0, RTK_SHRINK, RTK_SHRINK);
+				i, i + 1, 5, 6, 0, 0, RTK_SHRINK, RTK_SHRINK);
 	}
 	
+	/* Phantom Power and Phantom Power Persistance */
+	for (unsigned int i = 0; i < ui->device->num_phantom; ++i) 
+	{
+		ui->btn_phantom[i] = robtk_cbtn_new (ui->device->phantom_labels[i], GBT_LED_LEFT, false);
+		if (ui->device->phantoms_are_switches) {
+			robtk_cbtn_set_active (ui->btn_phantom[i], get_switch (phantom (ui, i)) == 1);
+		} else {
+			robtk_cbtn_set_active (ui->btn_phantom[i], get_enum (phantom (ui, i)) == 1);
+		}
+		int c1 = ui->device->num_air + i + 3;
+		int c2 = c1 + 1;
+		robtk_cbtn_set_callback (ui->btn_phantom[i], cb_set_phantom, ui);
+		rob_table_attach (ui->output, robtk_cbtn_widget (ui->btn_phantom[i]),
+				c1, c2, 5, 6, 0, 0, RTK_SHRINK, RTK_SHRINK);
+	}
+
 	/* Clocks */
 	for (unsigned int i = 0; i < ui->device->num_clock; ++i) 
 	{
@@ -1621,24 +1638,11 @@ static RobWidget* toplevel (RobTkApp* ui, void* const top) {
 			robtk_cbtn_set_active (ui->btn_clock[i], get_enum (glock (ui, i)) == 1);
 		}
 		robtk_cbtn_set_callback (ui->btn_clock[i], cb_set_clock, ui);
+		int c1 = ui->device->num_air + ui->device->num_phantom + i + 7;
+		int c2 = c1 + 1;
 		rob_table_attach (ui->output, robtk_cbtn_widget (ui->btn_clock[i]),
-				i, i + 1, 3, 4, 0, 0, RTK_SHRINK, RTK_SHRINK);
+				c1, c2, 5, 6, 0, 0, RTK_SHRINK, RTK_SHRINK);
 	}
-
-	/* Phantom Power and Phantom Power Persistance */
-	for (unsigned int i = 0; i < ui->device->num_phantom; ++i) 
-	{
-		ui->btn_phantom[i] = robtk_cbtn_new (ui->device->phantom_labels[i], GBT_LED_LEFT, false);
-		if (ui->device->phantoms_are_switches) {
-			robtk_cbtn_set_active (ui->btn_phantom[i], get_switch (phantom (ui, i)) == 1);
-		} else {
-			robtk_cbtn_set_active (ui->btn_phantom[i], get_enum (phantom (ui, i)) == 1);
-		}
-		robtk_cbtn_set_callback (ui->btn_phantom[i], cb_set_phantom, ui);
-		rob_table_attach (ui->output, robtk_cbtn_widget (ui->btn_phantom[i]),
-				i, i + 1, 4, 5, 0, 0, RTK_SHRINK, RTK_SHRINK);
-	}
-
 
 	/* output selectors */
 	for (unsigned int o = 0; o < ui->device->sout; ++o) {
