@@ -63,7 +63,7 @@ Tested on 3rd Gen Scarlett 8i6 on Debian 11, kernel 5.14.9 against beta alsamixe
 - Fixed negative and off-by-1 index problems that were truncating labels.
 - Fixed AIR and PAD widget updates that were not responding to external changes.
 - Fixed MUTE functionality on 4 Headphone dial widgets.
-- Moved Hiz, Pad, Air button stack up 2 rows.
+- Made vertical separator length dependant on the tallest column, either Capture or Matrix.
 - Added Clock Source widget (Internal/SPDIF).
 - Added Clock Sync Source display widget (Locked/Unlocked)
 - Added Phantom Power widget.
@@ -86,5 +86,5 @@ Tested on 3rd Gen Scarlett 8i6 on Debian 11, kernel 5.14.9 against beta alsamixe
 ## Original:
 ![screenshot](https://github.com/92es/scarlett-mixer/blob/master/Scarlett%208i6%20Mixer%20Before.png "Original Scarlett 8i6 Mixer")
 
-## Updated: New widgets might be placed along the bottom row.
+## Updated:
 ![screenshot](https://github.com/92es/scarlett-mixer/blob/master/Scarlett%208i6%20Gen%203%20Mixer%20After.png "Modified Scarlett 8i6 3rd Gen Mixer")
